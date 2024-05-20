@@ -101,6 +101,7 @@ class PureHttp {
                   config.headers["Authorization"] = formatToken(
                     data.accessToken
                   );
+                  console.log(config);
                   resolve(config);
                 }
               } else {

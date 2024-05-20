@@ -2,8 +2,9 @@ import { http } from "@/utils/http";
 import { baseUrlApi } from "./utils";
 
 export type UserResult = {
+  msg: string;
+  success: boolean;
   data: {
-    success: boolean;
     /** 头像 */
     avatar: string;
     /** 用户名 */
@@ -22,8 +23,9 @@ export type UserResult = {
 };
 
 export type RefreshTokenResult = {
+  msg: string;
+  success: boolean;
   data: {
-    success: boolean;
     /** `token` */
     accessToken: string;
     /** 用于调用刷新`accessToken`的接口时所需的`token` */
@@ -45,4 +47,9 @@ export const refreshTokenApi = (data?: object) => {
   return http.request<RefreshTokenResult>("post", baseUrlApi("refresh_token"), {
     data
   });
+};
+
+/** 退出登录 */
+export const logOutApi = (data?: object) => {
+  return http.request("put", baseUrlApi("user/logout"), { data });
 };

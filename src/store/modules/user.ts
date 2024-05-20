@@ -11,10 +11,12 @@ import {
   type UserResult,
   type RefreshTokenResult,
   getLogin,
-  refreshTokenApi
+  refreshTokenApi,
+  logOutApi
 } from "@/api/user";
 import { useMultiTagsStoreHook } from "./multiTags";
 import { type DataInfo, setToken, removeToken, userKey } from "@/utils/auth";
+import { message } from "@/utils/message";
 
 export const useUserStore = defineStore({
   id: "pure-user",
@@ -62,7 +64,7 @@ export const useUserStore = defineStore({
       return new Promise<UserResult>((resolve, reject) => {
         getLogin(data)
           .then(data => {
-            if (data?.data.success) setToken(data.data);
+            if (data?.success) setToken(data.data);
             resolve(data);
           })
           .catch(error => {
@@ -72,12 +74,24 @@ export const useUserStore = defineStore({
     },
     /** 前端登出（不调用接口） */
     logOut() {
-      this.username = "";
-      this.roles = [];
-      removeToken();
-      useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
-      resetRouter();
-      router.push("/login");
+      new Promise((resolve, reject) => {
+        logOutApi()
+          .then(data => {
+            if (data) {
+              this.username = "";
+              this.roles = [];
+              removeToken();
+              useMultiTagsStoreHook().handleTags("equal", [...routerArrays]);
+              resetRouter();
+              router.push("/login");
+
+              resolve(data);
+            }
+          })
+          .catch(error => {
+            reject(error);
+          });
+      });
     },
     /** 刷新`token` */
     async handRefreshToken(data) {
@@ -85,6 +99,12 @@ export const useUserStore = defineStore({
         refreshTokenApi(data)
           .then(data => {
             if (data) {
+              // 刷新失败退出登录
+              if (!data.success) {
+                message(data.msg, { type: "error", duration: 3000 });
+                this.logOut();
+                return;
+              }
               setToken(data.data);
               resolve(data);
             }
